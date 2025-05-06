@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Employee Attendance & Advance Tracker</title>
+<style>
+  /* Reset */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    min-height: 600px;
+    max-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #333;
+  }
+  .container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 350px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    color: #2c3e50;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    display: block;
+  }
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    padding: 8px;
+    font-size: 1rem;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    width: 100%;
+  }
+  input[type="number"]::-webkit-inner-spin-button, 
+  input[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none;
+    margin: 0; 
+  }
+  button {
+    background: #2980b9;
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+  }
+  button:hover, button:focus {
+    background: #1c5980;
+    outline: none;
+  }
+  .records {
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+  th {
+    background-color: #2980b9;
+    color: white;
+    position: sticky;
+    top: 0;
+  }
+  @media (max-width: 400px) {
+    .container {
+      padding: 15px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container" role="main" aria-label="Employee Attendance and Advance Tracker">
+  <h1>Employee Attendance & Advances</h1>
+  <form id="entryForm" aria-describedby="formDesc">
+    <p id="formDesc" style="font-size:0.9rem; color:#666; margin-bottom:12px;">
+      Enter attendance status, advance taken (₹), advance given by, and date.
+    </p>
+    <label for="employeeName">Employee Name</label>
+    <input type="text" id="employeeName" name="employeeName" placeholder="Enter employee name" required aria-required="true" autocomplete="off" />
+    
+    <label for="attendanceStatus">Attendance Status</label>
+    <select id="attendanceStatus" name="attendanceStatus" required aria-required="true">
+      <option value="" disabled selected>Select status</option>
+      <option value="Present">Present</option>
+      <option value="Absent">Absent</option>
+    </select>
+    
+    <label for="advanceTaken">Advance Taken (₹)</label>
+    <input type="number" id="advanceTaken" name="advanceTaken" placeholder="0" min="0" step="0.01" />
+    
+    <label for="advanceGivenBy">Advance Given By</label>
+    <input type="text" id="advanceGivenBy" name="advanceGivenBy" placeholder="Name of giver" autocomplete="off" />
+    
+    <label for="recordDate">Date</label>
+    <input type="date" id="recordDate" name="recordDate" required aria-required="true" />
+    
+    <button type="submit" aria-label="Add attendance and advance record">Add Record</button>
+  </form>
+
+  <div class="records" aria-live="polite" aria-atomic="true" style="margin-top:20px;">
+    <h2 style="font-size:1.2rem; color:#34495e; margin-bottom:8px;">Records</h2>
+    <table id="recordsTable" aria-describedby="tableDesc">
+      <caption id="tableDesc" class="sr-only">Table showing employee attendance and advance records</caption>
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Status</th>
+          <th>Advance Taken (₹)</th>
+          <th>Advance Given By</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Records will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // Accessibility helper: hide-offscreen text for screen readers only
+  const style = document.createElement('style');
+  style.textContent = '.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }';
+  document.head.appendChild(style);
+
+  // Select elements
+  const form = document.getElementById('entryForm');
+  const tableBody = document.querySelector('#recordsTable tbody');
+
+  // Key for localStorage
+  const STORAGE_KEY = 'employeeAttendanceAdvanceRecords';
+
+  // Load stored records or initialize empty array
+  let records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+  // Save records to localStorage
+  function saveRecords() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  // Render table rows from records array
+  function renderRecords() {
+    tableBody.innerHTML = '';
+    if (records.length === 0) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 6;
+      cell.textContent = 'No records found.';
+      cell.style.fontStyle = 'italic';
+      row.appendChild(cell);
+      tableBody.appendChild(row);
+      return;
+    }
+    records.forEach((record, index) => {
+      const row = document.createElement('tr');
+
+      const empCell = document.createElement('td');
+      empCell.textContent = record.employeeName;
+      empCell.setAttribute('data-label', 'Employee');
+      row.appendChild(empCell);
+
+      const statusCell = document.createElement('td');
+      statusCell.textContent = record.attendanceStatus;
+      statusCell.setAttribute('data-label', 'Status');
+      row.appendChild(statusCell);
+
+      const advanceTakenCell = document.createElement('td');
+      advanceTakenCell.textContent = record.advanceTaken ? Number(record.advanceTaken).toFixed(2) : '0.00';
+      advanceTakenCell.setAttribute('data-label', 'Advance Taken (₹)');
+      row.appendChild(advanceTakenCell);
+
+      const advanceGivenByCell = document.createElement('td');
+      advanceGivenByCell.textContent = record.advanceGivenBy || '';
+      advanceGivenByCell.setAttribute('data-label', 'Advance Given By');
+      row.appendChild(advanceGivenByCell);
+
+      const dateCell = document.createElement('td');
+      dateCell.textContent = record.recordDate;
+      dateCell.setAttribute('data-label', 'Date');
+      row.appendChild(dateCell);
+
+      // Action button to delete record
+      const actionCell = document.createElement('td');
+      actionCell.setAttribute('data-label', 'Action');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.setAttribute('aria-label', `Delete record for ${record.employeeName} on ${record.recordDate}`);
+      deleteBtn.style.backgroundColor = '#c0392b';
+      deleteBtn.style.color = 'white';
+      deleteBtn.style.border = 'none';
+      deleteBtn.style.padding = '4px 8px';
+      deleteBtn.style.borderRadius = '6px';
+      deleteBtn.style.cursor = 'pointer';
+      deleteBtn.addEventListener('click', () => {
+        if (confirm(`Are you sure you want to delete the record for ${record.employeeName} on ${record.recordDate}?`)) {
+          records.splice(index, 1);
+          saveRecords();
+          renderRecords();
+        }
+      });
+      actionCell.appendChild(deleteBtn);
+      row.appendChild(actionCell);
+
+      tableBody.appendChild(row);
+    });
+  }
+
+  // Form submission handler
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Validate required fields are automatically handled by browser
+
+    // Read values
+    const employeeName = form.employeeName.value.trim();
+    const attendanceStatus = form.attendanceStatus.value;
+    const advanceTakenRaw = form.advanceTaken.value.trim();
+    const advanceTaken = advanceTakenRaw !== '' ? parseFloat(advanceTakenRaw) : 0;
+    const advanceGivenBy = form.advanceGivenBy.value.trim();
+    const recordDate = form.recordDate.value;
+
+    // Additional validation: advanceTaken >= 0
+    if (advanceTaken < 0) {
+      alert('Advance Taken cannot be negative.');
+      return;
+    }
+
+    // Construct record object
+    const record = {
+      employeeName,
+      attendanceStatus,
+      advanceTaken,
+      advanceGivenBy,
+      recordDate,
+    };
+
+    // Add record
+    records.push(record);
+
+    // Save and re-render
+    saveRecords();
+    renderRecords();
+
+    // Reset form, keep date for convenience
+    form.employeeName.value = '';
+    form.attendanceStatus.selectedIndex = 0;
+    form.advanceTaken.value = '';
+    form.advanceGivenBy.value = '';
+    // Keep date or clear it, here clearing for fresh entry
+    form.recordDate.value = '';
+
+    form.employeeName.focus();
+  });
+
+  // Initial render on page load
+  renderRecords();
+</script>
+</body>
+</html>
+

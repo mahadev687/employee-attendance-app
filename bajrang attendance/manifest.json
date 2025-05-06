@@ -1,0 +1,22 @@
+{
+    "name": "Employee Attendance & Advance Tracker",
+    "short_name": "Attend & Advance",
+    "start_url": "./employee_attendance_advance.html",
+    "display": "standalone",
+    "background_color": "#f0f4f8",
+    "theme_color": "#2980b9",
+    "description": "Track employee attendance and advances easily.",
+    "icons": [
+      {
+        "src": "https://images.pexels.com/photos/3184398/pexels-photo-3184398.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=64&w=64",
+        "sizes": "64x64",
+        "type": "image/jpeg"
+      },
+      {
+        "src": "https://images.pexels.com/photos/3184398/pexels-photo-3184398.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=192&w=192",
+        "sizes": "192x192",
+        "type": "image/jpeg"
+      }
+    ]
+  }
+  
